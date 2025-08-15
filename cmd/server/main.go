@@ -4,34 +4,37 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/DevBajaj02/load-balancer/internal/backend"
+	"github.com/DevBajaj02/load-balancer/internal/loadbalancer"
 )
 
 func main() {
 	// Start multiple test backend servers
-	backends := []*TestBackend{
-		NewTestBackend(8081),
-		NewTestBackend(8082),
-		NewTestBackend(8083),
+	backends := []*backend.TestBackend{
+		backend.NewTestBackend(8081),
+		backend.NewTestBackend(8082),
+		backend.NewTestBackend(8083),
 	}
 
 	// Start each backend server
-	for _, backend := range backends {
-		go func(b *TestBackend) {
+	for _, b := range backends {
+		go func(b *backend.TestBackend) {
 			if err := b.Start(); err != nil {
-				log.Printf("Backend on port %d failed: %v\n", b.port, err)
+				log.Printf("Backend on port %d failed: %v\n", b.Port, err)
 			}
-		}(backend)
+		}(b)
 	}
 
 	// Give backends time to start
 	time.Sleep(time.Second)
 
 	// Create our load balancer
-	lb := NewLoadBalancer(":8080")
+	lb := loadbalancer.New(":8080")
 
 	// Add our backends to the load balancer
-	for _, backend := range backends {
-		backendURL := fmt.Sprintf("http://localhost:%d", backend.port)
+	for _, b := range backends {
+		backendURL := fmt.Sprintf("http://localhost:%d", b.Port)
 		if err := lb.AddBackend(backendURL); err != nil {
 			log.Printf("Failed to add backend %s: %v\n", backendURL, err)
 		}

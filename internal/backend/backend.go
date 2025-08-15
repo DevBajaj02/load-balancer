@@ -1,4 +1,4 @@
-package main
+package backend
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"load-balancer/logger"
+	"github.com/DevBajaj02/load-balancer/internal/logger"
 )
 
 // Backend represents a single backend server that can receive forwarded requests
@@ -72,7 +72,6 @@ func (b *Backend) SetAlive(alive bool) {
 }
 
 // CheckHealth performs a health check on the backend server
-// and updates its alive status accordingly
 func (b *Backend) CheckHealth() bool {
 	client := http.Client{
 		Timeout: b.checkTimeout,
@@ -89,21 +88,14 @@ func (b *Backend) CheckHealth() bool {
 	b.SetAlive(alive)
 
 	if !alive {
-		log.Printf("Backend %s returned non-200 status: %d", b.URL, resp.StatusCode)
+		logger.HealthError("Backend %s returned non-200 status: %d", b.URL, resp.StatusCode)
 	}
 
 	return alive
 }
 
-// SetTimeout updates how long to wait for health checks and how long to cache results
-func (b *Backend) SetTimeout(d time.Duration) {
-	b.mux.Lock()
-	b.checkTimeout = d
-	b.mux.Unlock()
-}
-
 // Serve forwards the request to this backend using a reverse proxy
 func (b *Backend) Serve(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Forwarding request to %s: %s %s", b.URL, r.Method, r.URL.Path)
+	logger.Client("Forwarding request to %s: %s %s", b.URL, r.Method, r.URL.Path)
 	b.proxy.ServeHTTP(w, r)
 }

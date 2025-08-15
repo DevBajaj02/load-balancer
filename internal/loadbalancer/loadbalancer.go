@@ -1,32 +1,35 @@
-package main
+package loadbalancer
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"load-balancer/logger"
+	"github.com/DevBajaj02/load-balancer/internal/backend"
+	"github.com/DevBajaj02/load-balancer/internal/logger"
 )
 
+// LoadBalancer distributes incoming requests across multiple backends
 type LoadBalancer struct {
 	port            string
 	roundRobinCount uint64
-	backends        []*Backend
+	backends        []*backend.Backend
 	mu              sync.RWMutex
 }
 
-func NewLoadBalancer(port string) *LoadBalancer {
+// New creates a new load balancer instance
+func New(port string) *LoadBalancer {
 	return &LoadBalancer{
 		port:     port,
-		backends: make([]*Backend, 0),
+		backends: make([]*backend.Backend, 0),
 	}
 }
 
+// AddBackend adds a new backend server to the pool
 func (lb *LoadBalancer) AddBackend(backendURL string) error {
-	backend, err := NewBackend(backendURL)
+	backend, err := backend.NewBackend(backendURL)
 	if err != nil {
 		return fmt.Errorf("failed to create backend: %v", err)
 	}
@@ -35,11 +38,12 @@ func (lb *LoadBalancer) AddBackend(backendURL string) error {
 	lb.backends = append(lb.backends, backend)
 	lb.mu.Unlock()
 
-	log.Printf("Added backend: %s\n", backendURL)
+	logger.LoadBalancer("Added backend: %s", backendURL)
 	return nil
 }
 
-func (lb *LoadBalancer) getNextBackend() *Backend {
+// getNextBackend selects the next available backend using round-robin
+func (lb *LoadBalancer) getNextBackend() *backend.Backend {
 	lb.mu.RLock()
 	defer lb.mu.RUnlock()
 
@@ -62,6 +66,7 @@ func (lb *LoadBalancer) getNextBackend() *Backend {
 	return nil
 }
 
+// ServeHTTP implements http.Handler
 func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	backend := lb.getNextBackend()
 	if backend == nil {
@@ -74,6 +79,7 @@ func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	backend.Serve(w, r)
 }
 
+// Start begins listening for requests and performing health checks
 func (lb *LoadBalancer) Start() error {
 	server := &http.Server{
 		Addr:    lb.port,
@@ -86,6 +92,7 @@ func (lb *LoadBalancer) Start() error {
 	return server.ListenAndServe()
 }
 
+// healthCheck periodically checks the health of all backends
 func (lb *LoadBalancer) healthCheck() {
 	ticker := time.NewTicker(time.Second * 2)
 	for range ticker.C {
