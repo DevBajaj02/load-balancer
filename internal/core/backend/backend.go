@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DevBajaj02/load-balancer/internal/logger"
+	"github.com/DevBajaj02/load-balancer/internal/utils/logger"
 )
 
 // Backend represents a single backend server that can receive forwarded requests

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DevBajaj02/load-balancer/internal/logger"
+	"github.com/DevBajaj02/load-balancer/internal/utils/logger"
 )
 
 // TestBackend represents a mock backend server for testing

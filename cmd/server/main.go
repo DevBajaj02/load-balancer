@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/DevBajaj02/load-balancer/internal/backend"
-	"github.com/DevBajaj02/load-balancer/internal/loadbalancer"
+	"github.com/DevBajaj02/load-balancer/internal/core/backend"
+	"github.com/DevBajaj02/load-balancer/internal/core/balancer"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 	time.Sleep(time.Second)
 
 	// Create our load balancer
-	lb := loadbalancer.New(":8080")
+	lb := balancer.New(":8080")
 
 	// Add our backends to the load balancer
 	for _, b := range backends {

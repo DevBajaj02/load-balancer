@@ -1,4 +1,4 @@
-package loadbalancer
+package balancer
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DevBajaj02/load-balancer/internal/backend"
-	"github.com/DevBajaj02/load-balancer/internal/logger"
+	"github.com/DevBajaj02/load-balancer/internal/core/backend"
+	"github.com/DevBajaj02/load-balancer/internal/utils/logger"
 )
 
 // LoadBalancer distributes incoming requests across multiple backends
