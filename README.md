@@ -15,16 +15,41 @@ A Layer 7 (HTTP) load balancer implementation that distributes incoming HTTP req
 
 ```
 load-balancer/
-├── cmd/
-│   ├── control/        # Backend control tool
-│   ├── test-client/    # Load testing client
-│   └── server/         # Main load balancer server
-├── internal/
-│   ├── backend/        # Backend implementation
-│   ├── loadbalancer/   # Load balancer core
-│   └── logger/         # Colored logging package
+├── cmd/                    # Command-line applications
+│   ├── control/           # Backend control tool
+│   ├── test-client/       # Load testing client
+│   └── server/            # Main load balancer server
+├── internal/              # Private application code
+│   ├── core/             # Core business logic
+│   │   ├── backend/      # Backend server management
+│   │   │   ├── backend.go    # Backend interface and implementation
+│   │   │   └── test_backend.go # Test backend for development
+│   │   └── balancer/     # Load balancing logic
+│   └── utils/            # Shared utilities
+│       └── logger/       # Colored logging package
 └── README.md
 ```
+
+### Package Descriptions
+
+- `cmd/server`: Main application that starts the load balancer and test backends
+- `cmd/control`: Tool to control backend states (failure simulation, delays)
+- `cmd/test-client`: Tool to generate test traffic
+
+- `internal/core/backend`: Backend server management
+  - Handles both real and test backend implementations
+  - Manages health checks and server states
+  - Implements proxy forwarding
+
+- `internal/core/balancer`: Load balancing logic
+  - Implements round-robin selection
+  - Manages backend pool
+  - Handles request distribution
+
+- `internal/utils/logger`: Shared logging utilities
+  - Color-coded log output
+  - Different log levels for different operations
+  - Clear distinction between health checks and client requests
 
 ## Getting Started
 
@@ -64,30 +89,28 @@ go run cmd/test-client/main.go -n 100 -c 10 -i 10ms
 
 ## How It Works
 
-1. **Load Balancing**: Uses round-robin algorithm to distribute requests across healthy backends.
+1. **Load Balancing**: 
+   - Round-robin algorithm distributes requests
+   - Only healthy backends receive traffic
+   - Dynamic backend pool management
 
 2. **Health Checks**: 
-   - Periodically checks backend health
-   - Automatically removes unhealthy backends
-   - Restores backends when they recover
+   - Regular health checks every 2 seconds
+   - Automatic backend removal on failure
+   - Automatic recovery when backend is healthy
 
-3. **Backend Management**:
-   - Dynamic backend pool
-   - Health state tracking
-   - Request forwarding with reverse proxy
+3. **Request Flow**:
+   ```
+   Client → Load Balancer → Backend Selection → Health Check → Forward Request
+                                            ↳ Error if no healthy backends
+   ```
 
 4. **Logging**:
-   - Color-coded log output
-   - Request tracking
-   - Health check status
-   - Backend state changes
-
-## Testing Features
-
-- Simulate backend failures
-- Add response delays
-- Generate test traffic
-- Monitor request distribution
+   - Color-coded for different operations:
+     - 🟢 Green: Successful health checks
+     - 🔴 Red: Failed health checks
+     - 🔵 Blue: Client requests
+     - 🟡 Yellow: Load balancer operations
 
 ## Development
 
@@ -110,9 +133,5 @@ go run cmd/server/main.go
 ```
 
 ## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Note
 
 This is a project created for learning purposes by [@DevBajaj02](https://github.com/DevBajaj02). Feedback is welcome to improve the project!
